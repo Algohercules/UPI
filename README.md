@@ -37,44 +37,121 @@ You'll see all three in the dashboard.
 
 ### Prerequisites
 
-- **JDK 17 or newer** installed and on PATH (or `JAVA_HOME` set). Check with `java -version`.
-- That's it. No database, no Redis, no Maven (the wrapper handles it). Just Java.
+- **JDK 17 or newer** installed and on PATH (or `JAVA_HOME` set). Check with:
+  ```bash
+  java -version
+  ```
+- **Node.js 18+ & npm** for the React frontend. Check with:
+  ```bash
+  node -v
+  npm -v
+  ```
 
-### Run on Windows
+---
 
-Open a terminal in the project folder and run:
+### Running the Application
 
-```cmd
-mvnw.cmd spring-boot:run
+The application consists of a Spring Boot backend and a React + Vite frontend. Both run concurrently in separate terminals during development.
+
+```
+┌─────────────────────────────────┐                 ┌─────────────────────────────────┐
+│        Frontend (React)         │                 │      Backend (Spring Boot)      │
+│     http://localhost:5173       │ ──────────────▶ │      http://localhost:8080      │
+│  (Vite Dev Server + UI HMR)     │   proxy /api    │ (REST APIs + H2 In-Memory DB)   │
+└─────────────────────────────────┘                 └─────────────────────────────────┘
 ```
 
-The first run downloads Maven (~10 MB) and all dependencies (~80 MB) — give it a couple of minutes. Subsequent runs start in a few seconds.
+#### Step 1: Start the Backend (Spring Boot)
 
-### Run on Mac/Linux
+Open a terminal and navigate to `backend/`:
 
+**On Linux / macOS:**
 ```bash
+cd backend
+chmod +x ./mvnw     # Ensure wrapper has execute permissions (first time)
 ./mvnw spring-boot:run
 ```
 
-### Open the dashboard
-
-Once you see `Started UpiMeshApplication in X.XXX seconds`, open:
-
-**http://localhost:8080**
-
-You'll get a dark dashboard with everything you need to drive the demo.
-
-### Stop the server
-
-`Ctrl+C` in the terminal.
-
-### Run the tests
-
+**On Windows:**
 ```cmd
-mvnw.cmd test
+cd backend
+mvnw.cmd spring-boot:run
+```
+*(On Windows PowerShell, use `.\mvnw.cmd spring-boot:run`)*
+
+**What happens on backend startup:**
+- Automatically generates an in-memory 2048-bit RSA keypair for packet encryption/decryption.
+- Seeds 4 demo accounts into H2 in-memory database (`alice@demo`, `bob@demo`, `carol@demo`, `dave@demo`).
+- Embedded Tomcat starts listening on **`http://localhost:8080`**.
+- H2 Web Console becomes accessible at **`http://localhost:8080/h2-console`**.
+
+---
+
+#### Step 2: Start the Frontend (React + Vite)
+
+Open a **separate** terminal and navigate to `frontend/`:
+
+```bash
+cd frontend
+npm install   # Install dependencies (first time only)
+npm run dev   # Launch Vite development server
 ```
 
-The interesting one is `IdempotencyConcurrencyTest` — it fires three threads delivering the same packet simultaneously and asserts that exactly one settles.
+The frontend dashboard will be live at **`http://localhost:5173`**.
+Vite automatically proxies all `/api/*` requests to the Spring Boot backend running on `http://localhost:8080` (configured in `vite.config.js`).
+
+---
+
+### Service URLs & Endpoints
+
+| Service | URL | Notes |
+| :--- | :--- | :--- |
+| **Frontend Dashboard** | [http://localhost:5173](http://localhost:5173) | Interactive demo interface |
+| **Backend REST API** | [http://localhost:8080/api/accounts](http://localhost:8080/api/accounts) | Returns seeded accounts & balances |
+| **Server Public Key** | [http://localhost:8080/api/server-key](http://localhost:8080/api/server-key) | RSA public key for client encryption |
+| **H2 Web Console** | [http://localhost:8080/h2-console](http://localhost:8080/h2-console) | JDBC URL: `jdbc:h2:mem:upimesh`, User: `sa`, Password: *(empty)* |
+
+---
+
+### Verifying the Setup
+
+You can quickly verify that both services are responding:
+
+```bash
+# Verify backend API directly:
+curl -s http://localhost:8080/api/accounts
+
+# Verify frontend dev server & proxy:
+curl -s http://localhost:5173/api/accounts
+```
+
+---
+
+### Running Tests & Quality Checks
+
+#### Backend Tests
+```bash
+cd backend
+
+# Run all tests:
+./mvnw test        # Linux / macOS
+mvnw.cmd test      # Windows
+
+# Run specific concurrency idempotency test:
+./mvnw test -Dtest=IdempotencyConcurrencyTest
+```
+> `IdempotencyConcurrencyTest` simulates multiple mesh bridge nodes delivering the exact same payment simultaneously across separate threads, asserting that exactly one settles while duplicates are safely rejected.
+
+#### Frontend Checks
+```bash
+cd frontend
+
+# Run Oxlint:
+npm run lint
+
+# Validate production build:
+npm run build
+```
 
 ---
 
