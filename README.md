@@ -49,9 +49,51 @@ You'll see all three in the dashboard.
 
 ---
 
-### Running the Application
+### Option A: Run with Docker & Docker Compose (Recommended)
 
-The application consists of a Spring Boot backend and a React + Vite frontend. Both run concurrently in separate terminals during development.
+Run the entire full-stack application (Spring Boot backend + React frontend with Nginx reverse proxy + H2 DB) with a single command.
+
+#### Quick Start
+
+```bash
+# Clone the repository and navigate to project root
+cd UPI
+
+# Using the deployment script:
+chmod +x ./deploy.sh
+./deploy.sh start
+
+# Or directly using Docker Compose:
+docker compose up --build -d
+```
+
+```
+┌────────────────────────────────────────────────────────┐
+│              Docker Compose (upi-network)              │
+│                                                        │
+│  ┌────────────────────────┐    proxy   ┌────────────┐  │
+│  │   Frontend (Nginx)     │ ─────────▶ │  Backend   │  │
+│  │  http://localhost:80   │    /api    │ Spring Boot│  │
+│  │ http://localhost:5173  │            │  port 8080 │  │
+│  └────────────────────────┘            └────────────┘  │
+└────────────────────────────────────────────────────────┘
+```
+
+#### Container Management Commands
+
+| Action | Command | Docker Compose Equivalent |
+| :--- | :--- | :--- |
+| **Start / Build** | `./deploy.sh start` | `docker compose up --build -d` |
+| **Stop** | `./deploy.sh stop` | `docker compose down` |
+| **Restart** | `./deploy.sh restart` | `docker compose restart` |
+| **View Logs** | `./deploy.sh logs` | `docker compose logs -f` |
+| **Check Status** | `./deploy.sh status` | `docker compose ps` |
+| **Rebuild Fresh** | `./deploy.sh rebuild` | `docker compose build --no-cache && docker compose up -d` |
+| **Health Check** | `./deploy.sh check` | Checks frontend & backend HTTP endpoints |
+
+---
+
+### Option B: Run Locally Without Docker (Development Mode)
 
 ```
 ┌─────────────────────────────────┐                 ┌─────────────────────────────────┐

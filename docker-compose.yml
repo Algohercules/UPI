@@ -1,0 +1,51 @@
+services:
+  # Spring Boot Backend (REST API, RSA/AES crypto engine, Mesh simulator, In-memory H2 DB)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: upi-mesh-backend:latest
+    container_name: upi-mesh-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-docker}
+      - JAVA_OPTS=${JAVA_OPTS:--XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/server-key || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - upi-network
+
+  # React Frontend (Nginx reverse proxy + static SPA bundle)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: upi-mesh-frontend:latest
+    container_name: upi-mesh-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_DEV_PORT:-5173}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - upi-network
+
+networks:
+  upi-network:
+    name: upi-mesh-network
+    driver: bridge
