@@ -4,7 +4,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: upi-mesh-backend:latest
     container_name: upi-mesh-backend
     restart: unless-stopped
     ports:
@@ -20,14 +19,16 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - upi-network
+      upi-network:
+        aliases:
+          - backend
+          - upi-mesh-backend
 
   # React Frontend (Nginx reverse proxy + static SPA bundle)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: upi-mesh-frontend:latest
     container_name: upi-mesh-frontend
     restart: unless-stopped
     ports:
@@ -43,7 +44,10 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - upi-network
+      upi-network:
+        aliases:
+          - frontend
+          - upi-mesh-frontend
 
 networks:
   upi-network:
