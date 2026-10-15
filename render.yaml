@@ -1,0 +1,26 @@
+services:
+  # Spring Boot Backend Web Service
+  - type: web
+    name: upi-mesh-backend
+    runtime: docker
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: docker
+      - key: JAVA_OPTS
+        value: -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
+    healthCheckPath: /api/server-key
+
+  # React + Nginx Frontend Web Service
+  - type: web
+    name: upi-mesh-frontend
+    runtime: docker
+    dockerContext: frontend
+    dockerfilePath: frontend/Dockerfile
+    plan: free
+    region: oregon
