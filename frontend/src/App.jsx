@@ -175,25 +175,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
-  // Scroll‑driven background color and shadow effect
-  useEffect(() => {
-    const onScroll = () => {
-      const docEl = document.documentElement;
-      const maxScroll = docEl.scrollHeight - window.innerHeight;
-      const pct = maxScroll ? Math.min(window.scrollY / maxScroll, 1) : 0;
-      const start = [9, 10, 15]; // dark start rgb
-      const end = [26, 31, 43]; // slightly lighter rgb
-      const r = Math.round(start[0] + (end[0] - start[0]) * pct);
-      const g = Math.round(start[1] + (end[1] - start[1]) * pct);
-      const b = Math.round(start[2] + (end[2] - start[2]) * pct);
-      docEl.style.setProperty('--bg-color', `rgb(${r},${g},${b})`);
-      const shadow = 10 + 20 * pct; // 10px → 30px
-      docEl.style.setProperty('--bg-shadow', `0 0 ${shadow}px rgba(0,0,0,0.5)`);
-    };
-    window.addEventListener('scroll', onScroll);
-    onScroll(); // initialise
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+
 
   // Handle Inject Packet
   const handleSendPacket = async (e) => {

@@ -112,9 +112,6 @@ body {
   max-width: 1360px;
   margin: 0 auto;
   padding: 24px 20px 80px;
-  background: var(--bg-color, var(--bg-canvas));
-  box-shadow: var(--bg-shadow, 0 0 10px rgba(0,0,0,0.5));
-  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 @media (max-width: 768px) {
