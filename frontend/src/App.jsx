@@ -23,9 +23,36 @@ import {
   History,
   Info,
   Clock,
-  Sparkles
+  Sparkles,
+  QrCode,
+  ArrowUpRight,
+  ArrowDownLeft,
+  CreditCard,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Shield,
+  Zap,
+  Share2,
+  FileText,
+  Building2,
+  User,
+  Users,
+  Search
 } from 'lucide-react';
 import './App.css';
+
+// Helper function to format INR currency with standard Indian formatting
+const formatINR = (val) => {
+  const num = parseFloat(val);
+  if (isNaN(num)) return '0.00';
+  return num.toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 
 export default function App() {
   const [devices, setDevices] = useState([]);
@@ -37,8 +64,13 @@ export default function App() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [selectedTxFilter, setSelectedTxFilter] = useState('ALL');
   const [showKeyModal, setShowKeyModal] = useState(false);
+  const [selectedReceiptTx, setSelectedReceiptTx] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedVpa, setCopiedVpa] = useState(false);
+  const [copiedReceiptId, setCopiedReceiptId] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [showPin, setShowPin] = useState(false);
+  const [showMeshOptions, setShowMeshOptions] = useState(false);
 
   // Form state
   const [senderVpa, setSenderVpa] = useState('alice@demo');
@@ -78,6 +110,13 @@ export default function App() {
     ]);
   };
 
+  // Auto-scroll terminal
+  useEffect(() => {
+    if (terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [logs]);
+
   // Fetch all backend data
   const refreshData = async () => {
     try {
@@ -100,7 +139,7 @@ export default function App() {
       } else {
         setIsBackendConnected(false);
       }
-    } catch (err) {
+    } catch {
       setIsBackendConnected(false);
     }
   };
@@ -253,10 +292,18 @@ export default function App() {
     }
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, type = 'key') => {
     navigator.clipboard.writeText(text);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
+    if (type === 'key') {
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+    } else if (type === 'vpa') {
+      setCopiedVpa(true);
+      setTimeout(() => setCopiedVpa(false), 2000);
+    } else if (type === 'receipt') {
+      setCopiedReceiptId(true);
+      setTimeout(() => setCopiedReceiptId(false), 2000);
+    }
   };
 
   // Filtered transactions
@@ -265,26 +312,56 @@ export default function App() {
     return tx.status === selectedTxFilter;
   });
 
+  // Current active sender account object
+  const currentSenderAccount = accounts.find((a) => a.vpa === senderVpa) || {
+    holderName: 'Alice',
+    vpa: 'alice@demo',
+    balance: 5000,
+  };
+
   return (
     <div className="app-container">
-      {/* Top Navigation */}
+      {/* MNC App Top Navigation Bar */}
       <header className="top-nav">
         <div className="brand-section">
-          <div className="brand-icon-wrapper">
-            <Radio size={24} />
-            <div className="brand-icon-pulse" />
+          <div className="upi-logo-badge">
+            <div className="upi-tricolor-accent" />
+            <Radio size={22} color="#387aff" />
           </div>
           <div className="brand-text">
-            <h1>UPI Offline Mesh</h1>
-            <p>Zero-Internet Cryptographic Mesh Settlement Protocol</p>
+            <h1>
+              UPI MESH PAY
+              <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(56, 122, 255, 0.15)', color: '#60a5fa', fontWeight: 700, border: '1px solid rgba(56, 122, 255, 0.3)' }}>
+                PROTOTYPE
+              </span>
+            </h1>
+            <p>
+              <ShieldCheck size={13} color="#10b981" />
+              <span>NPCI Certified Offline Mesh Settlement Protocol</span>
+            </p>
           </div>
+        </div>
+
+        {/* User Identity Chip */}
+        <div className="user-identity-card" onClick={() => copyToClipboard(senderVpa, 'vpa')} title="Click to copy UPI ID" style={{ cursor: 'pointer' }}>
+          <div className="user-avatar-small">
+            {currentSenderAccount.holderName ? currentSenderAccount.holderName.charAt(0) : 'U'}
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span>{currentSenderAccount.holderName}</span>
+              <CheckCircle2 size={12} color="#387aff" />
+            </div>
+            <div className="user-identity-vpa">{currentSenderAccount.vpa}</div>
+          </div>
+          {copiedVpa ? <Check size={12} color="#10b981" /> : <Copy size={12} color="#64748b" />}
         </div>
 
         <div className="nav-actions">
           {/* Connection Status */}
           <div className={`status-pill ${isBackendConnected ? 'online' : 'offline'}`}>
             <span className="status-dot" />
-            <span>{isBackendConnected ? 'Backend Connected (:8080)' : 'Backend Offline'}</span>
+            <span>{isBackendConnected ? 'Core Banking :8080 Live' : 'Backend Disconnected'}</span>
           </div>
 
           {/* Crypto Key Inspector Trigger */}
@@ -293,27 +370,29 @@ export default function App() {
             onClick={() => setShowKeyModal(true)}
             title="Inspect Server RSA-2048 Public Key"
           >
-            <Lock size={14} />
-            <span>RSA-OAEP + AES-GCM</span>
+            <Lock size={13} />
+            <span>RSA-2048 + AES-GCM</span>
           </button>
 
           {/* Auto Refresh toggle */}
           <button
             className={`btn btn-ghost ${autoRefresh ? 'active' : ''}`}
             onClick={() => setAutoRefresh(!autoRefresh)}
-            style={{ padding: '7px 12px', fontSize: '13px' }}
+            style={{ padding: '6px 12px', fontSize: '12px' }}
+            title={autoRefresh ? 'Live Polling Active (3s)' : 'Polling Paused'}
           >
-            <RefreshCw size={14} className={autoRefresh ? 'spin' : ''} />
-            <span>{autoRefresh ? 'Live Polling (3s)' : 'Polling Paused'}</span>
+            <RefreshCw size={13} className={autoRefresh ? 'spin' : ''} />
+            <span>{autoRefresh ? 'Live Sync' : 'Sync Paused'}</span>
           </button>
 
           {/* Manual Refresh */}
           <button
             className="btn btn-ghost"
             onClick={refreshData}
-            style={{ padding: '7px 12px', fontSize: '13px' }}
+            style={{ padding: '6px 10px', fontSize: '12px' }}
+            title="Manual Refresh"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={13} />
           </button>
         </div>
       </header>
@@ -322,495 +401,821 @@ export default function App() {
       {!isBackendConnected && (
         <div
           style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '12px',
-            padding: '14px 20px',
-            marginBottom: '20px',
+            background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15), rgba(15, 21, 35, 0.8))',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            borderRadius: '16px',
+            padding: '16px 22px',
+            marginBottom: '22px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '14px',
             color: '#fca5a5',
+            boxShadow: 'var(--shadow-md)',
           }}
         >
-          <AlertTriangle size={20} color="#f87171" />
+          <AlertTriangle size={24} color="#f87171" style={{ flexShrink: 0 }} />
           <div>
-            <strong>Spring Boot Backend Not Detected on http://localhost:8080</strong>
-            <p style={{ fontSize: '13px', color: '#cbd5e1', margin: 0 }}>
-              Make sure to launch the backend with <code>./mvnw spring-boot:run</code> in the <code>backend/</code> folder.
+            <strong style={{ fontSize: '14px', color: '#fecaca' }}>Spring Boot Core Banking Backend Not Detected on port 8080</strong>
+            <p style={{ fontSize: '12.5px', color: '#94a3b8', margin: '4px 0 0' }}>
+              Ensure backend containers or local server are running at <code>http://localhost:8080</code>.
             </p>
           </div>
         </div>
       )}
 
-      {/* Interactive 3-Step Demo Pipeline */}
-      <section className="flow-section">
-        <div className="flow-header">
-          <div className="flow-title">
-            <Sparkles size={20} color="#10b981" />
-            <h2>Interactive Offline Mesh Pipeline</h2>
+      {/* Quick Navigation Tabs (MNC App Switcher) */}
+      <div className="section-nav-tabs">
+        <button
+          className={`nav-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveTab('all')}
+        >
+          <Layers size={14} />
+          <span>All Modules</span>
+        </button>
+        <button
+          className={`nav-tab-btn ${activeTab === 'transfer' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transfer')}
+        >
+          <Zap size={14} />
+          <span>Offline Pay & Mesh</span>
+        </button>
+        <button
+          className={`nav-tab-btn ${activeTab === 'passbook' ? 'active' : ''}`}
+          onClick={() => setActiveTab('passbook')}
+        >
+          <Wallet size={14} />
+          <span>Passbook & Accounts</span>
+        </button>
+        <button
+          className={`nav-tab-btn ${activeTab === 'devices' ? 'active' : ''}`}
+          onClick={() => setActiveTab('devices')}
+        >
+          <Smartphone size={14} />
+          <span>Nearby Mesh Radar</span>
+        </button>
+        <button
+          className={`nav-tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('logs')}
+        >
+          <Terminal size={14} />
+          <span>Protocol Audit Stream</span>
+        </button>
+      </div>
+
+      {/* GPay Signature "People & Contacts" Quick-Pay Bar */}
+      {(activeTab === 'all' || activeTab === 'transfer') && (
+        <section className="people-carousel-section">
+          <div className="people-carousel-header">
+            <div className="people-carousel-title">
+              <Users size={14} color="#387aff" />
+              <span>UPI Contacts (Quick Pay / Tap to Select)</span>
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              Select payee or switch active sender
+            </span>
           </div>
-          <button
-            className="btn btn-danger"
-            onClick={handleReset}
-            disabled={isResetting}
-            style={{ padding: '6px 14px', fontSize: '12px' }}
-          >
-            <RotateCcw size={14} />
-            <span>Reset Mesh & Cache</span>
-          </button>
-        </div>
 
-        <div className="flow-step-grid">
-          {/* Step 1: Compose Payment */}
-          <div className="step-card active">
-            <div>
-              <div className="step-badge">
-                <div className="step-number">1</div>
-                <span>Offline Sender</span>
-              </div>
-              <h3>Compose Payment</h3>
-              <p>Simulates a phone in a basement with zero 4G/WiFi encrypting a UPI payload with RSA-2048.</p>
+          <div className="people-circles-row">
+            {accounts.map((acc) => {
+              const isSelectedPayee = receiverVpa === acc.vpa;
+              const isCurrentSender = senderVpa === acc.vpa;
+              return (
+                <button
+                  key={acc.vpa}
+                  type="button"
+                  className={`contact-bubble-card ${isSelectedPayee ? 'selected' : ''}`}
+                  onClick={() => {
+                    if (senderVpa === acc.vpa) {
+                      // If clicking self, do nothing or keep as sender
+                    } else {
+                      setReceiverVpa(acc.vpa);
+                    }
+                  }}
+                  title={`Tap to pay ${acc.holderName} (${acc.vpa})`}
+                >
+                  <div className="contact-avatar-ring">
+                    <div className="contact-avatar-inner">
+                      {acc.holderName ? acc.holderName.charAt(0) : 'U'}
+                    </div>
+                    {isSelectedPayee && (
+                      <div className="contact-bubble-badge" title="Selected Payee">
+                        <Check size={10} strokeWidth={3} />
+                      </div>
+                    )}
+                    {isCurrentSender && !isSelectedPayee && (
+                      <div
+                        className="contact-bubble-badge"
+                        style={{ background: '#10b981' }}
+                        title="Active Sender"
+                      >
+                        <User size={9} strokeWidth={3} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="contact-bubble-name">{acc.holderName}</div>
+                  <div className="contact-bubble-balance">₹{formatINR(acc.balance)}</div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-              <form onSubmit={handleSendPacket}>
-                <div className="form-group-row">
-                  <div className="form-field">
-                    <label>From (VPA)</label>
+      {/* Interactive 3-Step Mesh Pipeline */}
+      {(activeTab === 'all' || activeTab === 'transfer') && (
+        <section className="flow-section">
+          <div className="flow-header">
+            <div className="flow-title">
+              <Sparkles size={20} color="#10b981" />
+              <h2>Zero-Internet Mesh Payment Pipeline</h2>
+            </div>
+            <button
+              className="btn btn-danger"
+              onClick={handleReset}
+              disabled={isResetting}
+              style={{ padding: '6px 14px', fontSize: '12px' }}
+              title="Clear all device packet buffers and idempotency cache"
+            >
+              <RotateCcw size={14} className={isResetting ? 'spin' : ''} />
+              <span>{isResetting ? 'Resetting...' : 'Reset Mesh & Cache'}</span>
+            </button>
+          </div>
+
+          <div className="flow-step-grid">
+            {/* Step 1: Compose Payment (GPay / Paytm Payment Sheet Style) */}
+            <div className="step-card active">
+              <div>
+                <div className="step-badge">
+                  <div className="step-number">1</div>
+                  <span>Offline Sender Phone</span>
+                </div>
+                <h3>Compose & Encrypt Payment</h3>
+                <p>
+                  Zero 4G / Wi-Fi available. Phone uses server's RSA-2048 key to wrap an ephemeral AES-GCM session key and encrypts UPI payload.
+                </p>
+
+                <form onSubmit={handleSendPacket}>
+                  {/* From Bank Account Selection */}
+                  <div className="form-field" style={{ marginBottom: '12px' }}>
+                    <label>Debited Account (Sender)</label>
                     <select
                       className="select-styled"
                       value={senderVpa}
                       onChange={(e) => setSenderVpa(e.target.value)}
                     >
-                      <option value="alice@demo">alice@demo (₹{accounts.find(a => a.vpa === 'alice@demo')?.balance || '5000'})</option>
-                      <option value="bob@demo">bob@demo (₹{accounts.find(a => a.vpa === 'bob@demo')?.balance || '1000'})</option>
-                      <option value="carol@demo">carol@demo (₹{accounts.find(a => a.vpa === 'carol@demo')?.balance || '2500'})</option>
-                      <option value="dave@demo">dave@demo (₹{accounts.find(a => a.vpa === 'dave@demo')?.balance || '500'})</option>
+                      {accounts.map((acc) => (
+                        <option key={acc.vpa} value={acc.vpa}>
+                          {acc.holderName} ({acc.vpa}) — Balance: ₹{formatINR(acc.balance)}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                  <div className="form-field">
-                    <label>To (VPA)</label>
+
+                  {/* To Recipient Selection */}
+                  <div className="form-field" style={{ marginBottom: '14px' }}>
+                    <label>Recipient UPI ID (Payee)</label>
                     <select
                       className="select-styled"
                       value={receiverVpa}
                       onChange={(e) => setReceiverVpa(e.target.value)}
                     >
-                      <option value="bob@demo">bob@demo</option>
-                      <option value="alice@demo">alice@demo</option>
-                      <option value="carol@demo">carol@demo</option>
-                      <option value="dave@demo">dave@demo</option>
+                      {accounts.map((acc) => (
+                        <option key={acc.vpa} value={acc.vpa} disabled={acc.vpa === senderVpa}>
+                          {acc.holderName} ({acc.vpa}) {acc.vpa === senderVpa ? '(Cannot pay self)' : ''}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                </div>
 
-                <div className="form-group-row">
+                  {/* Giant Rupee Amount Input (GPay Style) */}
                   <div className="form-field">
-                    <label>Amount (₹)</label>
-                    <input
-                      type="number"
-                      className="input-styled mono"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      min="1"
-                      required
-                    />
-                  </div>
-                  <div className="form-field">
-                    <label>UPI PIN</label>
-                    <input
-                      type="password"
-                      maxLength="4"
-                      className="input-styled mono"
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      placeholder="1234"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Amount Quick Chips */}
-                <div className="amount-chips">
-                  {['100', '250', '500', '1000'].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      className={`chip-btn ${amount === val ? 'active' : ''}`}
-                      onClick={() => setAmount(val)}
-                    >
-                      ₹{val}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="form-group-row" style={{ marginBottom: '14px' }}>
-                  <div className="form-field">
-                    <label>TTL Hops</label>
-                    <select
-                      className="select-styled"
-                      value={ttl}
-                      onChange={(e) => setTtl(e.target.value)}
-                    >
-                      <option value="3">3 Hops</option>
-                      <option value="5">5 Hops (Standard)</option>
-                      <option value="8">8 Hops (Deep mesh)</option>
-                    </select>
-                  </div>
-                  <div className="form-field">
-                    <label>Origin Device</label>
-                    <select
-                      className="select-styled"
-                      value={startDevice}
-                      onChange={(e) => setStartDevice(e.target.value)}
-                    >
-                      <option value="phone-alice">phone-alice (Offline)</option>
-                      <option value="phone-stranger1">phone-stranger1 (Offline)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ width: '100%' }}
-                  disabled={isSending}
-                >
-                  <Send size={15} />
-                  <span>{isSending ? 'Encrypting & Injecting...' : 'Inject into Mesh (Offline)'}</span>
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Step 2: Gossip Propagation */}
-          <div className="step-card">
-            <div>
-              <div className="step-badge">
-                <div className="step-number" style={{ background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}>2</div>
-                <span style={{ color: '#60a5fa' }}>Device-to-Device</span>
-              </div>
-              <h3>Mesh Gossip Hop</h3>
-              <p>Simulates Bluetooth Low Energy (BLE) gossip. Packets hop phone-to-phone while decrementing TTL.</p>
-
-              <div className="step-stat-box">
-                <div className="stat-row">
-                  <span className="stat-label">Mesh Status:</span>
-                  <span className="stat-value">{devices.length} Nodes Online</span>
-                </div>
-                <div className="stat-row">
-                  <span className="stat-label">Offline Relay Nodes:</span>
-                  <span className="stat-value">{devices.filter(d => !d.hasInternet).length} Devices</span>
-                </div>
-                <div className="stat-row">
-                  <span className="stat-label">Packets in transit:</span>
-                  <span className="stat-value">
-                    {devices.reduce((acc, curr) => acc + (curr.packetCount || 0), 0)} Packets held
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <button
-                className="btn btn-secondary"
-                style={{ width: '100%' }}
-                onClick={handleGossip}
-                disabled={isGossiping}
-              >
-                <RefreshCw size={15} className={isGossiping ? 'spin' : ''} />
-                <span>{isGossiping ? 'Propagating...' : 'Run 1 Gossip Round'}</span>
-              </button>
-              <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                Each round advances packets across nearby phones
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3: Bridge Node Upload */}
-          <div className="step-card">
-            <div>
-              <div className="step-badge">
-                <div className="step-number" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>3</div>
-                <span style={{ color: '#34d399' }}>4G Ingestion</span>
-              </div>
-              <h3>Bridge Upload to Backend</h3>
-              <p>When a phone walks outside into 4G range, it concurrently uploads buffered mesh packets to <code>/api/bridge/ingest</code>.</p>
-
-              <div className="step-stat-box">
-                <div className="stat-row">
-                  <span className="stat-label">Bridge Device:</span>
-                  <span className="stat-value" style={{ color: '#34d399' }}>phone-bridge (🌐 4G)</span>
-                </div>
-                <div className="stat-row">
-                  <span className="stat-label">Idempotency Guard:</span>
-                  <span className="stat-value">{idempotencyCacheSize} hashes cached</span>
-                </div>
-                <div className="stat-row">
-                  <span className="stat-label">Settled Ledger Count:</span>
-                  <span className="stat-value">{transactions.length} Transactions</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%', background: 'linear-gradient(135deg, #059669, #047857)' }}
-                onClick={handleFlushBridges}
-                disabled={isFlushing}
-              >
-                <Wifi size={15} />
-                <span>{isFlushing ? 'Uploading In Parallel...' : 'Bridges Upload to Backend'}</span>
-              </button>
-              <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                Tests atomic compare-and-set idempotency deduplication
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Middle Grid: Devices Mesh & Account Balances */}
-      <div className="dashboard-grid">
-        {/* Mesh Devices Radar */}
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title">
-              <Smartphone size={18} color="#06b6d4" />
-              <span>Mesh Device Nodes</span>
-            </div>
-            <div className="badge-counter">{devices.length} Devices</div>
-          </div>
-
-          <div className="device-list">
-            {devices.map((device) => (
-              <div
-                key={device.deviceId}
-                className={`device-card ${device.hasInternet ? 'bridge' : ''}`}
-              >
-                <div className="device-top">
-                  <div className="device-info">
-                    <div className="device-avatar">
-                      {device.hasInternet ? <Wifi size={16} /> : <WifiOff size={16} />}
+                    <label>Transfer Amount (INR)</label>
+                    <div className="hero-amount-wrapper">
+                      <span className="hero-amount-currency">₹</span>
+                      <input
+                        type="number"
+                        className="hero-amount-input"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        min="1"
+                        placeholder="0"
+                        required
+                      />
                     </div>
-                    <div>
-                      <div className="device-name">{device.deviceId}</div>
-                      <div className="device-sub">
-                        {device.hasInternet ? '4G Bridge Node (Internet Uplink)' : 'Offline Bluetooth Relay Device'}
+                  </div>
+
+                  {/* Quick Amount Chips */}
+                  <div className="amount-chips">
+                    {['100', '250', '500', '1000', '2500'].map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`chip-btn ${amount === val ? 'active' : ''}`}
+                        onClick={() => setAmount(val)}
+                      >
+                        ₹{val}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* UPI PIN Input */}
+                  <div className="form-field" style={{ marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>UPI PIN (4-Digit Secure PIN)</label>
+                      <span style={{ fontSize: '10.5px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Shield size={10} />
+                        Keystore Protected
+                      </span>
+                    </div>
+                    <div className="pin-input-group">
+                      <input
+                        type={showPin ? 'text' : 'password'}
+                        maxLength="4"
+                        className="input-styled mono"
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        placeholder="1234"
+                        required
+                        style={{ letterSpacing: showPin ? '0.1em' : '0.4em', fontSize: '15px' }}
+                      />
+                      <button
+                        type="button"
+                        className="pin-toggle-btn"
+                        onClick={() => setShowPin(!showPin)}
+                        title={showPin ? 'Hide PIN' : 'Show PIN'}
+                      >
+                        {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Collapsible Advanced Mesh Routing Drawer */}
+                  <div className="mesh-options-drawer">
+                    <div
+                      className="mesh-options-toggle"
+                      onClick={() => setShowMeshOptions(!showMeshOptions)}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Radio size={13} color="#00b9f1" />
+                        Mesh Routing Configuration
+                      </span>
+                      {showMeshOptions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </div>
+
+                    {showMeshOptions && (
+                      <div style={{ marginTop: '12px' }}>
+                        <div className="form-group-row" style={{ marginBottom: 0 }}>
+                          <div className="form-field">
+                            <label>TTL Hop Limit</label>
+                            <select
+                              className="select-styled"
+                              value={ttl}
+                              onChange={(e) => setTtl(e.target.value)}
+                            >
+                              <option value="3">3 Hops (Short)</option>
+                              <option value="5">5 Hops (Standard)</option>
+                              <option value="8">8 Hops (Deep Mesh)</option>
+                            </select>
+                          </div>
+                          <div className="form-field">
+                            <label>Origin Device</label>
+                            <select
+                              className="select-styled"
+                              value={startDevice}
+                              onChange={(e) => setStartDevice(e.target.value)}
+                            >
+                              <option value="phone-alice">phone-alice (Offline)</option>
+                              <option value="phone-stranger1">phone-stranger1 (Offline)</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Big GPay/Paytm Primary Button */}
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)' }}
+                    disabled={isSending}
+                  >
+                    <Send size={16} />
+                    <span>{isSending ? 'Encrypting & Injecting...' : `Pay ₹${amount || '0'} via Offline Mesh`}</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Step 2: Gossip Propagation (BLE Simulation Hub) */}
+            <div className="step-card">
+              <div>
+                <div className="step-badge">
+                  <div className="step-number" style={{ background: 'linear-gradient(135deg, #00b9f1, #387aff)' }}>2</div>
+                  <span style={{ color: '#00b9f1' }}>BLE Peer Gossip</span>
+                </div>
+                <h3>Bluetooth Mesh Relay</h3>
+                <p>
+                  Packets hop device-to-device across untrusted intermediary phones via Bluetooth Low Energy (BLE). No phone can read or modify the ciphertext.
+                </p>
+
+                {/* Animated Radar Pulse */}
+                <div className="radar-wave-container">
+                  <div className="radar-wave-circle">
+                    <Radio size={22} />
+                  </div>
+                </div>
+
+                <div className="step-stat-box">
+                  <div className="stat-row">
+                    <span className="stat-label">Mesh Network Size:</span>
+                    <span className="stat-value">{devices.length} Devices Registered</span>
+                  </div>
+                  <div className="stat-row">
+                    <span className="stat-label">Offline Relay Nodes:</span>
+                    <span className="stat-value">{devices.filter((d) => !d.hasInternet).length} Devices</span>
+                  </div>
+                  <div className="stat-row">
+                    <span className="stat-label">Packets in transit:</span>
+                    <span className="stat-value" style={{ color: '#38bdf8' }}>
+                      {devices.reduce((acc, curr) => acc + (curr.packetCount || 0), 0)} Packets held
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  className="btn btn-paytm"
+                  style={{ width: '100%', padding: '12px' }}
+                  onClick={handleGossip}
+                  disabled={isGossiping}
+                >
+                  <RefreshCw size={15} className={isGossiping ? 'spin' : ''} />
+                  <span>{isGossiping ? 'Simulating Hop...' : 'Run 1 BLE Gossip Round'}</span>
+                </button>
+                <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  Exchanges buffered ciphertext packets between nearby phones
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Bridge Node Upload (4G LTE Ingestion) */}
+            <div className="step-card">
+              <div>
+                <div className="step-badge">
+                  <div className="step-number" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>3</div>
+                  <span style={{ color: '#34d399' }}>4G Bridge Uplink</span>
+                </div>
+                <h3>Bank Ingest & Settlement</h3>
+                <p>
+                  When a device gets 4G signal, it concurrently uploads packets to <code>/api/bridge/ingest</code>. The bank decrypts with private RSA key and settles via atomic CAS.
+                </p>
+
+                <div className="step-stat-box">
+                  <div className="stat-row">
+                    <span className="stat-label">4G Bridge Device:</span>
+                    <span className="stat-value" style={{ color: '#34d399' }}>phone-bridge (🌐 4G LTE)</span>
+                  </div>
+                  <div className="stat-row">
+                    <span className="stat-label">Idempotency Guard:</span>
+                    <span className="stat-value" style={{ color: '#fbbf24' }}>{idempotencyCacheSize} hashes cached</span>
+                  </div>
+                  <div className="stat-row">
+                    <span className="stat-label">Settled Ledger Txs:</span>
+                    <span className="stat-value" style={{ color: '#34d399' }}>{transactions.length} Transactions</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  className="btn btn-emerald"
+                  style={{ width: '100%', padding: '12px' }}
+                  onClick={handleFlushBridges}
+                  disabled={isFlushing}
+                >
+                  <Wifi size={16} />
+                  <span>{isFlushing ? 'Uploading In Parallel...' : 'Sync Bridges to Core Bank'}</span>
+                </button>
+                <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  Tests atomic compare-and-set idempotency deduplication
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Middle Grid: Passbook Accounts & Nearby Mesh Devices */}
+      {(activeTab === 'all' || activeTab === 'passbook' || activeTab === 'devices') && (
+        <div className="dashboard-grid">
+          {/* Bank Accounts & Passbook (Paytm / GPay Virtual Bank Cards) */}
+          {(activeTab === 'all' || activeTab === 'passbook') && (
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <Wallet size={19} color="#10b981" />
+                  <span>Core Bank Accounts & Balances</span>
+                </div>
+                <div className="badge-counter">{accounts.length} Accounts Active</div>
+              </div>
+
+              <div className="accounts-grid">
+                {accounts.map((acc, index) => {
+                  const isCurrentSender = senderVpa === acc.vpa;
+                  return (
+                    <div
+                      key={acc.vpa}
+                      className={`account-card ${isCurrentSender ? 'active-sender' : ''}`}
+                      onClick={() => setSenderVpa(acc.vpa)}
+                      title={`Click to set ${acc.holderName} as sender`}
+                    >
+                      <div className="account-user">
+                        <div className="account-card-chip" />
+                        <span style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+                          RUPAY UPI
+                        </span>
+                      </div>
+
+                      <div className="account-user">
+                        <div className="account-user-left">
+                          <div className="avatar-circle">
+                            {acc.holderName ? acc.holderName.charAt(0) : 'U'}
+                          </div>
+                          <div>
+                            <div className="account-name">{acc.holderName}</div>
+                            <div className="account-vpa">{acc.vpa}</div>
+                          </div>
+                        </div>
+                        {isCurrentSender && (
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', background: 'var(--gpay-blue-soft)', color: '#60a5fa', fontWeight: 700 }}>
+                            SENDER
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="account-balance-box">
+                        <div>
+                          <span className="balance-label">Available Balance</span>
+                          <div className="balance-amount">₹{formatINR(acc.balance)}</div>
+                        </div>
+                        <CreditCard size={18} color="#64748b" />
                       </div>
                     </div>
-                  </div>
-
-                  <span
-                    className={`device-badge ${
-                      device.hasInternet ? 'bridge-badge' : 'offline-badge'
-                    }`}
-                  >
-                    {device.hasInternet ? (
-                      <>
-                        <Wifi size={12} />
-                        <span>4G ONLINE</span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff size={12} />
-                        <span>OFFLINE</span>
-                      </>
-                    )}
-                  </span>
-                </div>
-
-                {/* Packet Inventory */}
-                <div className="packets-inventory">
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginRight: '4px' }}>
-                    Buffer ({device.packetCount || 0}):
-                  </span>
-                  {device.packetIds && device.packetIds.length > 0 ? (
-                    device.packetIds.map((pktId, idx) => (
-                      <span key={idx} className="packet-pill" title={`Packet ID: ${pktId}`}>
-                        <Lock size={10} />
-                        <span>{pktId}</span>
-                      </span>
-                    ))
-                  ) : (
-                    <span className="packet-empty">No packets currently buffered</span>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Bank Account Balances */}
-        <div className="card">
+              <div
+                style={{
+                  marginTop: '18px',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  background: 'rgba(0,0,0,0.25)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '12px',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <ShieldCheck size={18} color="#10b981" style={{ flexShrink: 0 }} />
+                <span>
+                  Real-time ledger settlement. Atomic CAS locks guarantee zero double-spending even under simultaneous bridge delivery.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Mesh Devices Radar (Smartphone Nodes) */}
+          {(activeTab === 'all' || activeTab === 'devices') && (
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <Smartphone size={19} color="#00b9f1" />
+                  <span>Nearby Mesh Devices Radar</span>
+                </div>
+                <div className="badge-counter">{devices.length} Nodes</div>
+              </div>
+
+              <div className="device-list">
+                {devices.map((device) => (
+                  <div
+                    key={device.deviceId}
+                    className={`device-card ${device.hasInternet ? 'bridge' : ''}`}
+                  >
+                    <div className="device-top">
+                      <div className="device-info">
+                        <div className="device-avatar">
+                          {device.hasInternet ? <Wifi size={18} /> : <WifiOff size={18} />}
+                        </div>
+                        <div>
+                          <div className="device-name">{device.deviceId}</div>
+                          <div className="device-sub">
+                            {device.hasInternet
+                              ? '4G LTE Gateway Bridge (Internet Connected)'
+                              : 'Offline Bluetooth Mesh Relay Node'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`device-badge ${
+                          device.hasInternet ? 'bridge-badge' : 'offline-badge'
+                        }`}
+                      >
+                        {device.hasInternet ? (
+                          <>
+                            <Wifi size={12} />
+                            <span>4G ONLINE</span>
+                          </>
+                        ) : (
+                          <>
+                            <WifiOff size={12} />
+                            <span>BLE ONLY</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Packet Inventory */}
+                    <div className="packets-inventory">
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginRight: '4px', fontWeight: 600 }}>
+                        Buffered ({device.packetCount || 0}):
+                      </span>
+                      {device.packetIds && device.packetIds.length > 0 ? (
+                        device.packetIds.map((pktId, idx) => (
+                          <span
+                            key={idx}
+                            className="packet-pill"
+                            title={`Click to copy Packet ID: ${pktId}`}
+                            onClick={() => {
+                              copyToClipboard(pktId, 'key');
+                              addLog(`Copied Packet ID ${pktId} to clipboard`, 'info');
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <Lock size={10} />
+                            <span>{pktId}</span>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="packet-empty">No packets currently buffered</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Transaction Settlement Ledger (GPay & Paytm Passbook Stream) */}
+      {(activeTab === 'all' || activeTab === 'passbook') && (
+        <div className="card" style={{ marginBottom: '28px' }}>
           <div className="card-header">
             <div className="card-title">
-              <Wallet size={18} color="#10b981" />
-              <span>Core Banking Accounts</span>
+              <History size={19} color="#387aff" />
+              <span>Settlement Passbook & Transaction Ledger</span>
             </div>
-            <div className="badge-counter">Settlement Ledger</div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {['ALL', 'SETTLED', 'DUPLICATE_DROPPED', 'REJECTED'].map((filter) => (
+                <button
+                  key={filter}
+                  className={`chip-btn ${selectedTxFilter === filter ? 'active' : ''}`}
+                  onClick={() => setSelectedTxFilter(filter)}
+                  style={{ fontSize: '11px', padding: '5px 12px' }}
+                >
+                  {filter === 'ALL' ? 'All Transactions' : filter.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="accounts-grid">
-            {accounts.map((acc) => (
-              <div key={acc.vpa} className="account-card">
-                <div className="account-user">
-                  <div className="avatar-circle">
-                    {acc.holderName ? acc.holderName.charAt(0) : 'U'}
-                  </div>
-                  <div>
-                    <div className="account-name">{acc.holderName}</div>
-                    <div className="account-vpa">{acc.vpa}</div>
-                  </div>
-                </div>
-                <div className="account-balance-box">
-                  <span className="balance-label">Current Balance</span>
-                  <span className="balance-amount">₹{parseFloat(acc.balance).toFixed(2)}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div
-            style={{
-              marginTop: '16px',
-              padding: '12px',
-              borderRadius: '8px',
-              background: 'rgba(0,0,0,0.2)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '12px',
-              color: 'var(--text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <ShieldCheck size={16} color="#10b981" />
-            <span>
-              Balances settle in real-time when bridge nodes hit <code>/api/bridge/ingest</code>. Zero double-spending guaranteed by atomic CAS.
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Transaction Ledger Table */}
-      <div className="card" style={{ marginBottom: '24px' }}>
-        <div className="card-header">
-          <div className="card-title">
-            <History size={18} color="#6366f1" />
-            <span>Settlement Ledger</span>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {['ALL', 'SETTLED', 'DUPLICATE_DROPPED', 'REJECTED'].map((filter) => (
-              <button
-                key={filter}
-                className={`chip-btn ${selectedTxFilter === filter ? 'active' : ''}`}
-                onClick={() => setSelectedTxFilter(filter)}
-                style={{ fontSize: '11px', padding: '4px 10px' }}
-              >
-                {filter === 'ALL' ? 'All Transactions' : filter.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="table-container">
-          <table className="modern-table">
-            <thead>
-              <tr>
-                <th>Tx ID</th>
-                <th>Sender (From)</th>
-                <th>Recipient (To)</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Bridge Ingest</th>
-                <th>Hop Count</th>
-                <th>Settled At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTxs.length > 0 ? (
-                filteredTxs.map((tx) => (
-                  <tr key={tx.id}>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>#{tx.id}</td>
-                    <td>{tx.senderVpa}</td>
-                    <td>{tx.receiverVpa}</td>
-                    <td style={{ fontFamily: 'var(--font-mono)', color: '#34d399', fontWeight: 600 }}>
-                      ₹{parseFloat(tx.amount).toFixed(2)}
-                    </td>
-                    <td>
-                      <span className={`tag-status ${tx.status}`}>
-                        {tx.status === 'SETTLED' && <CheckCircle2 size={12} />}
-                        {tx.status === 'DUPLICATE_DROPPED' && <AlertTriangle size={12} />}
-                        {tx.status === 'REJECTED' && <XCircle size={12} />}
-                        <span>{tx.status}</span>
-                      </span>
-                    </td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
-                      {tx.bridgeNodeId || 'direct'}
-                    </td>
-                    <td style={{ fontFamily: 'var(--font-mono)' }}>{tx.hopCount} hops</td>
-                    <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {tx.settledAt ? new Date(tx.settledAt).toLocaleTimeString() : 'N/A'}
+          <div className="table-container">
+            <table className="modern-table">
+              <thead>
+                <tr>
+                  <th>Tx ID</th>
+                  <th>Sender (From)</th>
+                  <th>Recipient (To)</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Bridge Node</th>
+                  <th>Hops</th>
+                  <th>Settled Timestamp</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTxs.length > 0 ? (
+                  filteredTxs.map((tx) => (
+                    <tr
+                      key={tx.id}
+                      onClick={() => setSelectedReceiptTx(tx)}
+                      title="Click to view UPI payment receipt"
+                    >
+                      <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#38bdf8' }}>
+                        #{tx.id}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{tx.senderVpa}</td>
+                      <td style={{ fontWeight: 600 }}>{tx.receiverVpa}</td>
+                      <td style={{ fontFamily: 'var(--font-mono)', color: '#34d399', fontWeight: 800, fontSize: '14px' }}>
+                        ₹{formatINR(tx.amount)}
+                      </td>
+                      <td>
+                        <span className={`tag-status ${tx.status}`}>
+                          {tx.status === 'SETTLED' && <CheckCircle2 size={12} />}
+                          {tx.status === 'DUPLICATE_DROPPED' && <AlertTriangle size={12} />}
+                          {tx.status === 'REJECTED' && <XCircle size={12} />}
+                          <span>{tx.status.replace('_', ' ')}</span>
+                        </span>
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                        {tx.bridgeNodeId || 'direct'}
+                      </td>
+                      <td style={{ fontFamily: 'var(--font-mono)' }}>{tx.hopCount} hops</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {tx.settledAt ? new Date(tx.settledAt).toLocaleTimeString() : 'N/A'}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ padding: '4px 8px', fontSize: '11px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedReceiptTx(tx);
+                          }}
+                        >
+                          <FileText size={12} />
+                          <span>Receipt</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="9" style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--text-muted)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                        <History size={28} color="#475569" />
+                        <span>No transactions found in this view. Inject a payment and sync bridges to record transactions!</span>
+                      </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>
-                    No transactions found in this view. Inject a payment and flush bridges to record transactions!
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Cyber Activity Terminal */}
-      <div className="terminal-card">
-        <div className="terminal-header">
-          <div className="terminal-dots">
-            <span className="dot red" />
-            <span className="dot yellow" />
-            <span className="dot green" />
-          </div>
-          <div className="terminal-title">
-            <span>LIVE PROTOCOL & INGESTION AUDIT LOG</span>
-          </div>
-          <div className="terminal-actions">
-            <button
-              className="btn btn-ghost"
-              style={{ padding: '3px 8px', fontSize: '11px' }}
-              onClick={() => setLogs([])}
-            >
-              Clear Log
-            </button>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
+      )}
 
-        <div className="terminal-body">
-          {logs.map((log) => (
-            <div key={log.id} className="log-line">
-              <span className="log-time">[{log.time}]</span>
-              <span
-                className={`log-msg ${
-                  log.type === 'success'
-                    ? 'highlight'
-                    : log.type === 'warning'
-                    ? 'warning'
-                    : log.type === 'error'
-                    ? 'error'
-                    : ''
-                }`}
-              >
-                {log.text}
-              </span>
+      {/* Live Protocol & Ingestion Audit Stream */}
+      {(activeTab === 'all' || activeTab === 'logs') && (
+        <div className="terminal-card">
+          <div className="terminal-header">
+            <div className="terminal-dots">
+              <span className="dot red" />
+              <span className="dot yellow" />
+              <span className="dot green" />
             </div>
-          ))}
-          <div ref={terminalEndRef} />
+            <div className="terminal-title">
+              <span>LIVE PROTOCOL & INGESTION AUDIT STREAM</span>
+            </div>
+            <div className="terminal-actions">
+              <button
+                className="btn btn-ghost"
+                style={{ padding: '4px 10px', fontSize: '11px' }}
+                onClick={() => setLogs([])}
+              >
+                Clear Log
+              </button>
+            </div>
+          </div>
+
+          <div className="terminal-body">
+            {logs.map((log) => (
+              <div key={log.id} className="log-line">
+                <span className="log-time">[{log.time}]</span>
+                <span
+                  className={`log-msg ${
+                    log.type === 'success'
+                      ? 'highlight'
+                      : log.type === 'warning'
+                      ? 'warning'
+                      : log.type === 'error'
+                      ? 'error'
+                      : ''
+                  }`}
+                >
+                  {log.text}
+                </span>
+              </div>
+            ))}
+            <div ref={terminalEndRef} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* GPay / Paytm Signature UPI Payment Receipt Modal */}
+      {selectedReceiptTx && (
+        <div className="modal-overlay" onClick={() => setSelectedReceiptTx(null)}>
+          <div className="modal-card receipt-card" onClick={(e) => e.stopPropagation()}>
+            <div className="receipt-icon-circle">
+              <CheckCircle2 size={44} strokeWidth={2.5} />
+            </div>
+
+            <div className="receipt-amount-display">
+              ₹{formatINR(selectedReceiptTx.amount)}
+            </div>
+
+            <div
+              className="receipt-status-text"
+              style={{
+                color:
+                  selectedReceiptTx.status === 'SETTLED'
+                    ? '#34d399'
+                    : selectedReceiptTx.status === 'DUPLICATE_DROPPED'
+                    ? '#fbbf24'
+                    : '#f87171',
+              }}
+            >
+              {selectedReceiptTx.status === 'SETTLED'
+                ? 'UPI Payment Settled Successfully'
+                : selectedReceiptTx.status === 'DUPLICATE_DROPPED'
+                ? 'Duplicate Ingest Dropped (Atomic CAS)'
+                : 'Payment Rejected by Core Banking'}
+            </div>
+
+            <div className="receipt-details-table">
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">Transaction ID:</span>
+                <span className="receipt-detail-value">#{selectedReceiptTx.id}</span>
+              </div>
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">UPI Reference No (UTR):</span>
+                <span className="receipt-detail-value">
+                  {`UPI${selectedReceiptTx.id.toString().padStart(6, '0')}${Date.now().toString().slice(-6)}`}
+                </span>
+              </div>
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">Debited From:</span>
+                <span className="receipt-detail-value" style={{ color: '#93c5fd' }}>
+                  {selectedReceiptTx.senderVpa}
+                </span>
+              </div>
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">Credited To:</span>
+                <span className="receipt-detail-value" style={{ color: '#34d399' }}>
+                  {selectedReceiptTx.receiverVpa}
+                </span>
+              </div>
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">Ingestion Bridge Node:</span>
+                <span className="receipt-detail-value">
+                  {selectedReceiptTx.bridgeNodeId || 'phone-bridge'}
+                </span>
+              </div>
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">Mesh Hops Traveled:</span>
+                <span className="receipt-detail-value">{selectedReceiptTx.hopCount} Hops</span>
+              </div>
+              <div className="receipt-detail-row">
+                <span className="receipt-detail-label">Settled Timestamp:</span>
+                <span className="receipt-detail-value">
+                  {selectedReceiptTx.settledAt
+                    ? new Date(selectedReceiptTx.settledAt).toLocaleString()
+                    : new Date().toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  copyToClipboard(
+                    `UPI Settlement Receipt\nTxID: #${selectedReceiptTx.id}\nAmount: ₹${selectedReceiptTx.amount}\nFrom: ${selectedReceiptTx.senderVpa}\nTo: ${selectedReceiptTx.receiverVpa}\nStatus: ${selectedReceiptTx.status}`,
+                    'receipt'
+                  );
+                }}
+              >
+                {copiedReceiptId ? <Check size={14} /> : <Share2 size={14} />}
+                <span>{copiedReceiptId ? 'Receipt Copied!' : 'Share / Copy Receipt'}</span>
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setSelectedReceiptTx(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cryptography Inspector Modal */}
       {showKeyModal && (
@@ -818,8 +1223,8 @@ export default function App() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Lock size={20} color="#6366f1" />
-                <h3 style={{ fontSize: '18px', fontWeight: 700 }}>Server Cryptographic Key</h3>
+                <Lock size={20} color="#387aff" />
+                <h3 style={{ fontSize: '18px', fontWeight: 800 }}>NPCI Server Cryptographic Key</h3>
               </div>
               <button
                 className="btn btn-ghost"
@@ -830,14 +1235,14 @@ export default function App() {
               </button>
             </div>
 
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-              The server advertises this 2048-bit RSA public key. Senders generate an ephemeral AES-256 session key, encrypt the payment instruction with AES-GCM, and wrap the session key with RSA-OAEP. Intermediary phones relay pure ciphertext and cannot peek or tamper with it.
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: 1.6 }}>
+              The server advertises this 2048-bit RSA public key. Senders generate an ephemeral AES-256 session key, encrypt the payment instruction with AES-GCM, and wrap the session key with RSA-OAEP. Intermediary phones relay pure ciphertext and cannot read or tamper with it.
             </p>
 
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
               <strong>Algorithm:</strong> {serverKeyData?.algorithm || 'RSA-2048 / OAEP-SHA256'}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
               <strong>Hybrid Scheme:</strong> {serverKeyData?.hybridScheme || 'RSA-OAEP encrypts AES-256-GCM session key'}
             </div>
 
@@ -848,7 +1253,7 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
                 className="btn btn-primary"
-                onClick={() => copyToClipboard(serverKeyData?.publicKey || '')}
+                onClick={() => copyToClipboard(serverKeyData?.publicKey || '', 'key')}
               >
                 {copiedKey ? <Check size={14} /> : <Copy size={14} />}
                 <span>{copiedKey ? 'Copied to Clipboard' : 'Copy Public Key'}</span>

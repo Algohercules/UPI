@@ -1,4 +1,4 @@
-/* Additional App specific animations and layout helpers */
+/* App specific keyframe animations & micro-interactions */
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -10,10 +10,41 @@
 
 @keyframes hop-pulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.08); filter: brightness(1.2); }
+  50% { transform: scale(1.05); filter: brightness(1.2); }
   100% { transform: scale(1); }
 }
 
 .pulse-active {
   animation: hop-pulse 0.8s ease-in-out;
+}
+
+@keyframes subtle-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-btn {
+  background-size: 200% 100%;
+  animation: subtle-shimmer 3s infinite linear;
+}
+
+/* Tooltip micro-styling */
+[data-tooltip] {
+  position: relative;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .hero-amount-currency {
+    font-size: 22px;
+  }
+  .hero-amount-input {
+    font-size: 24px;
+  }
+  .step-card {
+    padding: 16px;
+  }
+  .card {
+    padding: 16px;
+  }
 }
