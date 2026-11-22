@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
+  Flame,
   Radio,
   Wifi,
   WifiOff,
@@ -40,11 +41,14 @@ import {
   Building2,
   User,
   Users,
-  Search
+  Search,
+  Code,
+  Cpu,
+  Laptop
 } from 'lucide-react';
 import './App.css';
 
-// Helper function to format INR currency with standard Indian formatting
+// Helper function to format INR currency
 const formatINR = (val) => {
   const num = parseFloat(val);
   if (isNaN(num)) return '0.00';
@@ -91,7 +95,7 @@ export default function App() {
     {
       id: 'init-1',
       time: new Date().toLocaleTimeString(),
-      text: 'UPI Offline Mesh Client initialized. Ready to simulate zero-internet mesh routing.',
+      text: 'CodeHelp Mesh Daemon v2.4 initialized. Ready for zero-internet packet routing.',
       type: 'info',
     },
   ]);
@@ -321,36 +325,39 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* MNC App Top Navigation Bar */}
-      <header className="top-nav">
+      {/* CodeHelp Sticky Top Navigation Bar */}
+      <header className="codehelp-nav">
         <div className="brand-section">
-          <div className="upi-logo-badge">
-            <div className="upi-tricolor-accent" />
-            <Radio size={22} color="#387aff" />
+          <div className="codehelp-logo-badge">
+            <Flame size={22} color="#f97316" className="flame-glow" />
           </div>
           <div className="brand-text">
             <h1>
-              UPI MESH PAY
-              <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(56, 122, 255, 0.15)', color: '#60a5fa', fontWeight: 700, border: '1px solid rgba(56, 122, 255, 0.3)' }}>
-                PROTOTYPE
-              </span>
+              <span>CodeHelp</span>
+              <span className="codehelp-gradient-text">Mesh</span>
+              <span className="codehelp-nav-pill">PROTOCOL LAB</span>
             </h1>
             <p>
               <ShieldCheck size={13} color="#10b981" />
-              <span>NPCI Certified Offline Mesh Settlement Protocol</span>
+              <span>Offline UPI Settlement • BLE Mesh Simulator</span>
             </p>
           </div>
         </div>
 
         {/* User Identity Chip */}
-        <div className="user-identity-card" onClick={() => copyToClipboard(senderVpa, 'vpa')} title="Click to copy UPI ID" style={{ cursor: 'pointer' }}>
+        <div
+          className="user-identity-card"
+          onClick={() => copyToClipboard(senderVpa, 'vpa')}
+          title="Click to copy UPI ID"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="user-avatar-small">
             {currentSenderAccount.holderName ? currentSenderAccount.holderName.charAt(0) : 'U'}
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span>{currentSenderAccount.holderName}</span>
-              <CheckCircle2 size={12} color="#387aff" />
+              <CheckCircle2 size={12} color="#ac84eb" />
             </div>
             <div className="user-identity-vpa">{currentSenderAccount.vpa}</div>
           </div>
@@ -423,7 +430,100 @@ export default function App() {
         </div>
       )}
 
-      {/* Quick Navigation Tabs (MNC App Switcher) */}
+      {/* CodeHelp Hero Section */}
+      <section className="codehelp-hero-section hero-animate">
+        <div className="codehelp-eyebrow">
+          <Flame size={14} color="#f97316" />
+          <span>ZERO-INTERNET MESH REVOLUTION • PRODUCTION LAB</span>
+        </div>
+
+        <h1 className="codehelp-hero-title">
+          Offline UPI Routing <span className="codehelp-gradient-text">with Mesh Network</span>
+        </h1>
+
+        <p className="codehelp-hero-desc">
+          Simulate how a payment made in a disconnected basement hops device-to-device via Bluetooth mesh until an internet-connected bridge node silently ingests it for atomic idempotency settlement.
+        </p>
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-codehelp"
+            onClick={() => setActiveTab('transfer')}
+          >
+            <Zap size={15} />
+            <span>Launch Offline Payment</span>
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={handleGossip}
+            disabled={isGossiping}
+          >
+            <RefreshCw size={14} className={isGossiping ? 'spin' : ''} />
+            <span>{isGossiping ? 'Propagating...' : 'Trigger BLE Gossip'}</span>
+          </button>
+          <button
+            className="btn btn-emerald"
+            onClick={handleFlushBridges}
+            disabled={isFlushing}
+          >
+            <Wifi size={14} />
+            <span>{isFlushing ? 'Ingesting...' : 'Sync 4G Bridge'}</span>
+          </button>
+          <button
+            className="btn btn-danger"
+            onClick={handleReset}
+            disabled={isResetting}
+          >
+            <RotateCcw size={14} className={isResetting ? 'spin' : ''} />
+            <span>Reset Protocol</span>
+          </button>
+        </div>
+      </section>
+
+      {/* CodeHelp Metrics Bar (4 Highlights) */}
+      <div className="codehelp-metrics-bar">
+        <div className="metric-card">
+          <div className="metric-icon-box" style={{ color: '#ac84eb' }}>
+            <Smartphone size={20} />
+          </div>
+          <div>
+            <div className="metric-val">{devices.length} Nodes</div>
+            <div className="metric-lbl">Active Mesh Devices</div>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon-box" style={{ color: '#5c77db' }}>
+            <Lock size={20} />
+          </div>
+          <div>
+            <div className="metric-val">RSA-2048 + AES</div>
+            <div className="metric-lbl">Hybrid Cryptography</div>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon-box" style={{ color: '#fbbf24' }}>
+            <Cpu size={20} />
+          </div>
+          <div>
+            <div className="metric-val">{idempotencyCacheSize} Cached</div>
+            <div className="metric-lbl">Atomic CAS Deduplication</div>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-icon-box" style={{ color: '#10b981' }}>
+            <Activity size={20} />
+          </div>
+          <div>
+            <div className="metric-val">{transactions.length} Transactions</div>
+            <div className="metric-lbl">Settled Ledger Count</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Navigation Tabs (CodeHelp Section Switcher) */}
       <div className="section-nav-tabs">
         <button
           className={`nav-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
@@ -458,17 +558,17 @@ export default function App() {
           onClick={() => setActiveTab('logs')}
         >
           <Terminal size={14} />
-          <span>Protocol Audit Stream</span>
+          <span>Protocol Output Console</span>
         </button>
       </div>
 
-      {/* GPay Signature "People & Contacts" Quick-Pay Bar */}
+      {/* Contact Circles Carousel */}
       {(activeTab === 'all' || activeTab === 'transfer') && (
         <section className="people-carousel-section">
           <div className="people-carousel-header">
             <div className="people-carousel-title">
-              <Users size={14} color="#387aff" />
-              <span>UPI Contacts (Quick Pay / Tap to Select)</span>
+              <Users size={14} color="#ac84eb" />
+              <span>Peer Contacts (Quick Pay / Tap to Select)</span>
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
               Select payee or switch active sender
@@ -485,9 +585,7 @@ export default function App() {
                   type="button"
                   className={`contact-bubble-card ${isSelectedPayee ? 'selected' : ''}`}
                   onClick={() => {
-                    if (senderVpa === acc.vpa) {
-                      // If clicking self, do nothing or keep as sender
-                    } else {
+                    if (senderVpa !== acc.vpa) {
                       setReceiverVpa(acc.vpa);
                     }
                   }}
@@ -526,8 +624,8 @@ export default function App() {
         <section className="flow-section">
           <div className="flow-header">
             <div className="flow-title">
-              <Sparkles size={20} color="#10b981" />
-              <h2>Zero-Internet Mesh Payment Pipeline</h2>
+              <Sparkles size={20} color="#ac84eb" />
+              <h2>Interactive Mesh Payment Pipeline</h2>
             </div>
             <button
               className="btn btn-danger"
@@ -542,12 +640,12 @@ export default function App() {
           </div>
 
           <div className="flow-step-grid">
-            {/* Step 1: Compose Payment (GPay / Paytm Payment Sheet Style) */}
+            {/* Step 1: Compose Payment */}
             <div className="step-card active">
               <div>
                 <div className="step-badge">
                   <div className="step-number">1</div>
-                  <span>Offline Sender Phone</span>
+                  <span>MODULE 01 • OFFLINE SENDER</span>
                 </div>
                 <h3>Compose & Encrypt Payment</h3>
                 <p>
@@ -587,7 +685,7 @@ export default function App() {
                     </select>
                   </div>
 
-                  {/* Giant Rupee Amount Input (GPay Style) */}
+                  {/* Rupee Amount Input Box */}
                   <div className="form-field">
                     <label>Transfer Amount (INR)</label>
                     <div className="hero-amount-wrapper">
@@ -621,8 +719,8 @@ export default function App() {
                   {/* UPI PIN Input */}
                   <div className="form-field" style={{ marginBottom: '14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label>UPI PIN (4-Digit Secure PIN)</label>
-                      <span style={{ fontSize: '10.5px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <label>UPI PIN (4-Digit PIN)</label>
+                      <span style={{ fontSize: '10.5px', color: '#ac84eb', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Shield size={10} />
                         Keystore Protected
                       </span>
@@ -656,8 +754,8 @@ export default function App() {
                       onClick={() => setShowMeshOptions(!showMeshOptions)}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Radio size={13} color="#00b9f1" />
-                        Mesh Routing Configuration
+                        <Radio size={13} color="#ac84eb" />
+                        Mesh Routing Options
                       </span>
                       {showMeshOptions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </div>
@@ -672,7 +770,7 @@ export default function App() {
                               value={ttl}
                               onChange={(e) => setTtl(e.target.value)}
                             >
-                              <option value="3">3 Hops (Short)</option>
+                              <option value="3">3 Hops (Fast)</option>
                               <option value="5">5 Hops (Standard)</option>
                               <option value="8">8 Hops (Deep Mesh)</option>
                             </select>
@@ -693,26 +791,26 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* Big GPay/Paytm Primary Button */}
+                  {/* CodeHelp Gradient Submit Button */}
                   <button
                     type="submit"
-                    className="btn btn-primary"
-                    style={{ width: '100%', padding: '12px', fontSize: '14px', borderRadius: 'var(--radius-sm)' }}
+                    className="btn btn-codehelp"
+                    style={{ width: '100%', padding: '12px', fontSize: '14px' }}
                     disabled={isSending}
                   >
                     <Send size={16} />
-                    <span>{isSending ? 'Encrypting & Injecting...' : `Pay ₹${amount || '0'} via Offline Mesh`}</span>
+                    <span>{isSending ? 'Encrypting & Injecting...' : `Inject ₹${amount || '0'} into Mesh`}</span>
                   </button>
                 </form>
               </div>
             </div>
 
-            {/* Step 2: Gossip Propagation (BLE Simulation Hub) */}
+            {/* Step 2: Gossip Propagation */}
             <div className="step-card">
               <div>
                 <div className="step-badge">
-                  <div className="step-number" style={{ background: 'linear-gradient(135deg, #00b9f1, #387aff)' }}>2</div>
-                  <span style={{ color: '#00b9f1' }}>BLE Peer Gossip</span>
+                  <div className="step-number">2</div>
+                  <span style={{ color: '#5c77db' }}>MODULE 02 • PEER GOSSIP</span>
                 </div>
                 <h3>Bluetooth Mesh Relay</h3>
                 <p>
@@ -737,7 +835,7 @@ export default function App() {
                   </div>
                   <div className="stat-row">
                     <span className="stat-label">Packets in transit:</span>
-                    <span className="stat-value" style={{ color: '#38bdf8' }}>
+                    <span className="stat-value" style={{ color: '#ac84eb' }}>
                       {devices.reduce((acc, curr) => acc + (curr.packetCount || 0), 0)} Packets held
                     </span>
                   </div>
@@ -746,8 +844,8 @@ export default function App() {
 
               <div>
                 <button
-                  className="btn btn-paytm"
-                  style={{ width: '100%', padding: '12px' }}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', padding: '12px', borderColor: 'rgba(92, 119, 219, 0.4)' }}
                   onClick={handleGossip}
                   disabled={isGossiping}
                 >
@@ -760,12 +858,12 @@ export default function App() {
               </div>
             </div>
 
-            {/* Step 3: Bridge Node Upload (4G LTE Ingestion) */}
+            {/* Step 3: Bridge Node Upload */}
             <div className="step-card">
               <div>
                 <div className="step-badge">
                   <div className="step-number" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>3</div>
-                  <span style={{ color: '#34d399' }}>4G Bridge Uplink</span>
+                  <span style={{ color: '#34d399' }}>MODULE 03 • 4G INGESTION</span>
                 </div>
                 <h3>Bank Ingest & Settlement</h3>
                 <p>
@@ -807,22 +905,22 @@ export default function App() {
         </section>
       )}
 
-      {/* Middle Grid: Passbook Accounts & Nearby Mesh Devices */}
+      {/* Middle Grid: Accounts & Devices */}
       {(activeTab === 'all' || activeTab === 'passbook' || activeTab === 'devices') && (
         <div className="dashboard-grid">
-          {/* Bank Accounts & Passbook (Paytm / GPay Virtual Bank Cards) */}
+          {/* Bank Accounts (CodeHelp Developer Profiles) */}
           {(activeTab === 'all' || activeTab === 'passbook') && (
             <div className="card">
               <div className="card-header">
                 <div className="card-title">
-                  <Wallet size={19} color="#10b981" />
+                  <Wallet size={19} color="#ac84eb" />
                   <span>Core Bank Accounts & Balances</span>
                 </div>
                 <div className="badge-counter">{accounts.length} Accounts Active</div>
               </div>
 
               <div className="accounts-grid">
-                {accounts.map((acc, index) => {
+                {accounts.map((acc) => {
                   const isCurrentSender = senderVpa === acc.vpa;
                   return (
                     <div
@@ -849,7 +947,7 @@ export default function App() {
                           </div>
                         </div>
                         {isCurrentSender && (
-                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', background: 'var(--gpay-blue-soft)', color: '#60a5fa', fontWeight: 700 }}>
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(172, 132, 235, 0.15)', color: '#c4b5fd', fontWeight: 700 }}>
                             SENDER
                           </span>
                         )}
@@ -889,12 +987,12 @@ export default function App() {
             </div>
           )}
 
-          {/* Mesh Devices Radar (Smartphone Nodes) */}
+          {/* Mesh Devices Radar */}
           {(activeTab === 'all' || activeTab === 'devices') && (
             <div className="card">
               <div className="card-header">
                 <div className="card-title">
-                  <Smartphone size={19} color="#00b9f1" />
+                  <Smartphone size={19} color="#5c77db" />
                   <span>Nearby Mesh Devices Radar</span>
                 </div>
                 <div className="badge-counter">{devices.length} Nodes</div>
@@ -973,12 +1071,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Transaction Settlement Ledger (GPay & Paytm Passbook Stream) */}
+      {/* Transaction Settlement Ledger Table */}
       {(activeTab === 'all' || activeTab === 'passbook') && (
         <div className="card" style={{ marginBottom: '28px' }}>
           <div className="card-header">
             <div className="card-title">
-              <History size={19} color="#387aff" />
+              <History size={19} color="#ac84eb" />
               <span>Settlement Passbook & Transaction Ledger</span>
             </div>
 
@@ -1019,7 +1117,7 @@ export default function App() {
                       onClick={() => setSelectedReceiptTx(tx)}
                       title="Click to view UPI payment receipt"
                     >
-                      <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#38bdf8' }}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#c4b5fd' }}>
                         #{tx.id}
                       </td>
                       <td style={{ fontWeight: 600 }}>{tx.senderVpa}</td>
@@ -1062,7 +1160,7 @@ export default function App() {
                     <td colSpan="9" style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--text-muted)' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                         <History size={28} color="#475569" />
-                        <span>No transactions found in this view. Inject a payment and sync bridges to record transactions!</span>
+                        <span>No transactions recorded yet. Inject an offline payment and sync bridges!</span>
                       </div>
                     </td>
                   </tr>
@@ -1073,7 +1171,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Live Protocol & Ingestion Audit Stream */}
+      {/* Live Protocol Output Console (CodeHelp Online Compiler Console) */}
       {(activeTab === 'all' || activeTab === 'logs') && (
         <div className="terminal-card">
           <div className="terminal-header">
@@ -1083,7 +1181,7 @@ export default function App() {
               <span className="dot green" />
             </div>
             <div className="terminal-title">
-              <span>LIVE PROTOCOL & INGESTION AUDIT STREAM</span>
+              <span>OUTPUT CONSOLE • mesh-protocol.log</span>
             </div>
             <div className="terminal-actions">
               <button
@@ -1091,7 +1189,7 @@ export default function App() {
                 style={{ padding: '4px 10px', fontSize: '11px' }}
                 onClick={() => setLogs([])}
               >
-                Clear Log
+                Clear Console
               </button>
             </div>
           </div>
@@ -1120,12 +1218,12 @@ export default function App() {
         </div>
       )}
 
-      {/* GPay / Paytm Signature UPI Payment Receipt Modal */}
+      {/* CodeHelp Style UPI Payment Receipt Modal */}
       {selectedReceiptTx && (
         <div className="modal-overlay" onClick={() => setSelectedReceiptTx(null)}>
           <div className="modal-card receipt-card" onClick={(e) => e.stopPropagation()}>
             <div className="receipt-icon-circle">
-              <CheckCircle2 size={44} strokeWidth={2.5} />
+              <CheckCircle2 size={40} strokeWidth={2.5} />
             </div>
 
             <div className="receipt-amount-display">
@@ -1163,7 +1261,7 @@ export default function App() {
               </div>
               <div className="receipt-detail-row">
                 <span className="receipt-detail-label">Debited From:</span>
-                <span className="receipt-detail-value" style={{ color: '#93c5fd' }}>
+                <span className="receipt-detail-value" style={{ color: '#c4b5fd' }}>
                   {selectedReceiptTx.senderVpa}
                 </span>
               </div>
@@ -1195,7 +1293,7 @@ export default function App() {
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
-                className="btn btn-primary"
+                className="btn btn-codehelp"
                 onClick={() => {
                   copyToClipboard(
                     `UPI Settlement Receipt\nTxID: #${selectedReceiptTx.id}\nAmount: ₹${selectedReceiptTx.amount}\nFrom: ${selectedReceiptTx.senderVpa}\nTo: ${selectedReceiptTx.receiverVpa}\nStatus: ${selectedReceiptTx.status}`,
@@ -1223,8 +1321,8 @@ export default function App() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Lock size={20} color="#387aff" />
-                <h3 style={{ fontSize: '18px', fontWeight: 800 }}>NPCI Server Cryptographic Key</h3>
+                <Lock size={20} color="#ac84eb" />
+                <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Core Banking RSA Cryptographic Key</h3>
               </div>
               <button
                 className="btn btn-ghost"
@@ -1252,7 +1350,7 @@ export default function App() {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button
-                className="btn btn-primary"
+                className="btn btn-codehelp"
                 onClick={() => copyToClipboard(serverKeyData?.publicKey || '', 'key')}
               >
                 {copiedKey ? <Check size={14} /> : <Copy size={14} />}
