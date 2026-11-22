@@ -8,6 +8,10 @@
   --bg-input: #0a0c14;
   --bg-glass: rgba(13, 15, 23, 0.85);
 
+  /* Added default background variables for scroll effect */
+  --bg-color: var(--bg-canvas);
+  --bg-shadow: 0 0 10px rgba(0,0,0,0.5);
+
   /* CodeHelp Signature Accents */
   --brand-blue: #5c77db;
   --brand-purple: #ac84eb;
@@ -108,6 +112,9 @@ body {
   max-width: 1360px;
   margin: 0 auto;
   padding: 24px 20px 80px;
+  background: var(--bg-color, var(--bg-canvas));
+  box-shadow: var(--bg-shadow, 0 0 10px rgba(0,0,0,0.5));
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 @media (max-width: 768px) {
