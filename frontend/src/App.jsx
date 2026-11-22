@@ -325,19 +325,27 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* CodeHelp Sticky Top Navigation Bar */}
+      {/* CodeHelp Sticky Top Navigation Bar with Burning Flame Logo */}
       <header className="codehelp-nav">
         <div className="brand-section">
-          <div className="codehelp-logo-badge">
-            <Flame size={22} color="#f97316" className="flame-glow" />
+          {/* Real Burning Fire Animated Logo */}
+          <div className="burning-logo-wrapper" title="CodeHelp Mesh Burning Hearth">
+            <div className="burning-fire-container">
+              <Flame size={24} className="burning-flame-icon flame-outer" />
+              <Flame size={15} className="burning-flame-icon flame-inner" />
+              <span className="burning-ember ember-1" />
+              <span className="burning-ember ember-2" />
+              <span className="burning-ember ember-3" />
+            </div>
           </div>
+
           <div className="brand-text">
-            <h1>
+            <h1 className="floating-nav-title">
               <span>CodeHelp</span>
               <span className="codehelp-gradient-text">Mesh</span>
               <span className="codehelp-nav-pill">PROTOCOL LAB</span>
             </h1>
-            <p>
+            <p className="floating-nav-desc">
               <ShieldCheck size={13} color="#10b981" />
               <span>Offline UPI Settlement • BLE Mesh Simulator</span>
             </p>
@@ -430,18 +438,20 @@ export default function App() {
         </div>
       )}
 
-      {/* CodeHelp Hero Section */}
+      {/* CodeHelp Hero Section with Floating Title & Description */}
       <section className="codehelp-hero-section hero-animate">
-        <div className="codehelp-eyebrow">
-          <Flame size={14} color="#f97316" />
+        <div className="codehelp-eyebrow floating-eyebrow">
+          <div className="burning-mini-flame">
+            <Flame size={14} className="burning-flame-icon-small" />
+          </div>
           <span>ZERO-INTERNET MESH REVOLUTION • PRODUCTION LAB</span>
         </div>
 
-        <h1 className="codehelp-hero-title">
+        <h1 className="codehelp-hero-title floating-hero-title">
           Offline UPI Routing <span className="codehelp-gradient-text">with Mesh Network</span>
         </h1>
 
-        <p className="codehelp-hero-desc">
+        <p className="codehelp-hero-desc floating-hero-desc">
           Simulate how a payment made in a disconnected basement hops device-to-device via Bluetooth mesh until an internet-connected bridge node silently ingests it for atomic idempotency settlement.
         </p>
 
@@ -562,7 +572,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* Contact Circles Carousel */}
+      {/* Peer Contacts Carousel */}
       {(activeTab === 'all' || activeTab === 'transfer') && (
         <section className="people-carousel-section">
           <div className="people-carousel-header">
@@ -625,7 +635,7 @@ export default function App() {
           <div className="flow-header">
             <div className="flow-title">
               <Sparkles size={20} color="#ac84eb" />
-              <h2>Interactive Mesh Payment Pipeline</h2>
+              <h2 className="floating-section-title">Interactive Mesh Payment Pipeline</h2>
             </div>
             <button
               className="btn btn-danger"
@@ -647,8 +657,8 @@ export default function App() {
                   <div className="step-number">1</div>
                   <span>MODULE 01 • OFFLINE SENDER</span>
                 </div>
-                <h3>Compose & Encrypt Payment</h3>
-                <p>
+                <h3 className="floating-card-title">Compose & Encrypt Payment</h3>
+                <p className="floating-card-desc">
                   Zero 4G / Wi-Fi available. Phone uses server's RSA-2048 key to wrap an ephemeral AES-GCM session key and encrypts UPI payload.
                 </p>
 
@@ -812,8 +822,8 @@ export default function App() {
                   <div className="step-number">2</div>
                   <span style={{ color: '#5c77db' }}>MODULE 02 • PEER GOSSIP</span>
                 </div>
-                <h3>Bluetooth Mesh Relay</h3>
-                <p>
+                <h3 className="floating-card-title">Bluetooth Mesh Relay</h3>
+                <p className="floating-card-desc">
                   Packets hop device-to-device across untrusted intermediary phones via Bluetooth Low Energy (BLE). No phone can read or modify the ciphertext.
                 </p>
 
@@ -865,8 +875,8 @@ export default function App() {
                   <div className="step-number" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>3</div>
                   <span style={{ color: '#34d399' }}>MODULE 03 • 4G INGESTION</span>
                 </div>
-                <h3>Bank Ingest & Settlement</h3>
-                <p>
+                <h3 className="floating-card-title">Bank Ingest & Settlement</h3>
+                <p className="floating-card-desc">
                   When a device gets 4G signal, it concurrently uploads packets to <code>/api/bridge/ingest</code>. The bank decrypts with private RSA key and settles via atomic CAS.
                 </p>
 
@@ -908,11 +918,11 @@ export default function App() {
       {/* Middle Grid: Accounts & Devices */}
       {(activeTab === 'all' || activeTab === 'passbook' || activeTab === 'devices') && (
         <div className="dashboard-grid">
-          {/* Bank Accounts (CodeHelp Developer Profiles) */}
+          {/* Bank Accounts */}
           {(activeTab === 'all' || activeTab === 'passbook') && (
             <div className="card">
               <div className="card-header">
-                <div className="card-title">
+                <div className="card-title floating-section-title">
                   <Wallet size={19} color="#ac84eb" />
                   <span>Core Bank Accounts & Balances</span>
                 </div>
@@ -991,7 +1001,7 @@ export default function App() {
           {(activeTab === 'all' || activeTab === 'devices') && (
             <div className="card">
               <div className="card-header">
-                <div className="card-title">
+                <div className="card-title floating-section-title">
                   <Smartphone size={19} color="#5c77db" />
                   <span>Nearby Mesh Devices Radar</span>
                 </div>
@@ -1075,7 +1085,7 @@ export default function App() {
       {(activeTab === 'all' || activeTab === 'passbook') && (
         <div className="card" style={{ marginBottom: '28px' }}>
           <div className="card-header">
-            <div className="card-title">
+            <div className="card-title floating-section-title">
               <History size={19} color="#ac84eb" />
               <span>Settlement Passbook & Transaction Ledger</span>
             </div>
@@ -1171,7 +1181,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Live Protocol Output Console (CodeHelp Online Compiler Console) */}
+      {/* Live Protocol Output Console */}
       {(activeTab === 'all' || activeTab === 'logs') && (
         <div className="terminal-card">
           <div className="terminal-header">
@@ -1180,7 +1190,7 @@ export default function App() {
               <span className="dot yellow" />
               <span className="dot green" />
             </div>
-            <div className="terminal-title">
+            <div className="terminal-title floating-section-title">
               <span>OUTPUT CONSOLE • mesh-protocol.log</span>
             </div>
             <div className="terminal-actions">
